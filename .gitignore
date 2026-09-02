@@ -14,3 +14,15 @@ build/
 Thumbs.db
 .vscode/
 .idea/
+
+# Go
+vendor/
+*.exe
+*.test
+*.out
+
+# React / Vite
+.env.local
+.env.development.local
+.env.production.local
+coverage/
