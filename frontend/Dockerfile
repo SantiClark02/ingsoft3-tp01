@@ -1,24 +1,23 @@
 # syntax=docker/dockerfile:1
 
-# build stage
-FROM node:18 as build
+# ---------- Etapa 1: build ----------
+FROM node:20-alpine AS build
 
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm install
+# npm ci instala exactamente lo que dice package-lock.json.
+# Es reproducible, a diferencia de npm install.
+COPY package.json package-lock.json ./
+RUN npm ci
 
 COPY . .
 RUN npm run build
 
-# producción con nginx
-FROM nginx:stable-alpine
+# ---------- Etapa 2: runtime ----------
+FROM nginx:1.27-alpine
 
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# copiamos configuración personalizada de nginx si quisieras
-# COPY nginx.conf /etc/nginx/nginx.conf
-
 EXPOSE 80
-
 CMD ["nginx", "-g", "daemon off;"]
