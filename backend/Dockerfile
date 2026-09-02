@@ -1,32 +1,35 @@
 # syntax=docker/dockerfile:1
 
-# Imagen base de Golang
-FROM golang:1.21
+# ---------- Etapa 1: build ----------
+FROM golang:1.23-alpine AS build
 
-# Variable de entorno para no cachear módulos
-ENV GO111MODULE=on
+WORKDIR /src
 
-# Directorio de trabajo dentro del contenedor
-WORKDIR /app
-
-# Copiamos go.mod y go.sum primero para aprovechar cache
-COPY go.mod ./
-COPY go.sum ./
-
-# Descargar dependencias
+# Dependencias primero: esta capa se cachea y no se rehace
+# mientras go.mod y go.sum no cambien.
+COPY go.mod go.sum ./
 RUN go mod download
 
-# Copiar el resto del código
-COPY . ./
+# Recién ahora el código fuente
+COPY . .
 
-# Dar permisos de ejecución al wait-for-it
-RUN chmod +x wait-for-it.sh
+# CGO_ENABLED=0 produce un binario estático, sin dependencias
+# de librerías del sistema. Es lo que permite una imagen final mínima.
+# -ldflags="-s -w" quita símbolos de debug y achica el binario.
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /out/server .
 
-# Compilar binario
-RUN go build -o main .
+# ---------- Etapa 2: runtime ----------
+FROM alpine:3.20
 
-# Expone el puerto del servidor
+# ca-certificates para llamadas HTTPS salientes.
+# Usuario sin privilegios: si alguien escapa del proceso, no es root.
+RUN apk add --no-cache ca-certificates \
+    && adduser -D -u 10001 appuser
+
+WORKDIR /app
+COPY --from=build /out/server /app/server
+
+USER appuser
 EXPOSE 8080
 
-# Comando por defecto
-CMD ["./wait-for-it.sh", "mysql:3306", "-t", "60", "--", "./main"]
+ENTRYPOINT ["/app/server"]

@@ -21,9 +21,7 @@ services:
       start_period: 40s
 
   backend:
-    build:
-      context: ./backend
-    image: gimnasio-backend:local
+    image: ghcr.io/santiclark02/gimnasio-backend:v0.1.0
     container_name: gimnasio_backend
     restart: unless-stopped
     ports:
@@ -40,9 +38,7 @@ services:
       JWT_SECRET: ${JWT_SECRET}
 
   frontend:
-    build:
-      context: ./frontend
-    image: gimnasio-frontend:local
+    image: ghcr.io/santiclark02/gimnasio-frontend:v0.1.0
     container_name: gimnasio_frontend
     restart: unless-stopped
     ports:
