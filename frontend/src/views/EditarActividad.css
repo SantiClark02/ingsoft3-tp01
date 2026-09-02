@@ -1,0 +1,57 @@
+body {
+    /* ruta de ejemplo, cámbiala cuando pongas la imagen en /public */
+    background-image: url('/images/fondo5.jpg');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    min-height: 100vh;
+    margin: 0;
+    font-family: Arial, sans-serif;
+}
+
+.nueva-actividad-container {
+    max-width: 600px;
+    margin: 40px auto;
+    padding: 30px;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+}
+
+.nueva-actividad-container h1 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.nueva-actividad-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.nueva-actividad-form input,
+.nueva-actividad-form textarea {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.nueva-actividad-form button {
+    padding: 12px;
+    background-color: #007bff;
+    border: none;
+    color: white;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+.nueva-actividad-form button:hover {
+    background-color: #0056b3;
+}
+
+.error {
+    color: red;
+    margin-bottom: 10px;
+    text-align: center;
+}
