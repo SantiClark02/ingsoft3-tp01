@@ -1,5 +1,7 @@
 # ingsoft3-tp01
 
+[![CI](https://github.com/SantiClark02/ingsoft3-tp01/actions/workflows/ci.yml/badge.svg)](https://github.com/SantiClark02/ingsoft3-tp01/actions/workflows/ci.yml)
+
 Repositorio de la materia **Ingeniería de Software 3**.
 
 Contiene la aplicación del semestre —un sistema de gestión de gimnasio— y los trabajos
