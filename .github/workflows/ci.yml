@@ -23,6 +23,34 @@ jobs:
           cache-from: type=gha,scope=backend
           cache-to: type=gha,mode=max,scope=backend
 
+      # ---- TP5: tests + coverage + umbral, usando la etapa "test" del Dockerfile ----
+      - name: Construir la etapa de tests del backend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          target: test        # se detiene en la etapa de tests, no llega a la final
+          load: true          # deja la imagen en el Docker local para poder correrla
+          push: false
+          tags: backend-test:ci
+          cache-from: type=gha,scope=backend-test
+          cache-to: type=gha,mode=max,scope=backend-test
+
+      - name: Correr tests del backend con coverage y umbral
+        run: docker run --rm -v "${{ github.workspace }}/backend-coverage:/out" backend-test:ci
+
+      - name: Resumen del coverage del backend
+        if: ${{ !cancelled() }}
+        run: |
+          test -f backend-coverage/summary.md
+          cat backend-coverage/summary.md >> $GITHUB_STEP_SUMMARY
+
+      - name: Publicar el coverage del backend
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-backend
+          path: backend-coverage
+
   build-frontend:
     runs-on: ubuntu-latest
     steps:
@@ -38,3 +66,41 @@ jobs:
           tags: gimnasio-frontend:ci
           cache-from: type=gha,scope=frontend
           cache-to: type=gha,mode=max,scope=frontend
+
+      # ---- TP5: tests + coverage + umbral, usando la etapa "test" del Dockerfile ----
+      - name: Construir la etapa de tests del frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          target: test
+          load: true
+          push: false
+          tags: frontend-test:ci
+          cache-from: type=gha,scope=frontend-test
+          cache-to: type=gha,mode=max,scope=frontend-test
+
+      - name: Correr tests del frontend con coverage y umbral
+        run: |
+          docker run --rm -e COVERAGE_DIR=/salida/reporte \
+            -v "${{ github.workspace }}/frontend-coverage:/salida" frontend-test:ci
+
+      - name: Resumen del coverage del frontend
+        if: ${{ !cancelled() }}
+        run: |
+          F=frontend-coverage/reporte/coverage-summary.json
+          test -f "$F"
+          node -e "
+            const t = require('./$F').total;
+            if (!t.lines.total) { console.error('midio 0 archivos: revisar el include'); process.exit(1); }
+            const f = (m) => '| ' + m + ' | ' + t[m].pct + '% |';
+            console.log('### Coverage del frontend');
+            console.log('| métrica | % |'); console.log('|---|---|');
+            console.log(f('lines')); console.log(f('branches')); console.log(f('functions'));
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Publicar el coverage del frontend
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-frontend
+          path: frontend-coverage

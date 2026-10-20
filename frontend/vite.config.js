@@ -14,4 +14,13 @@ export default defineConfig({
       },
     },
   },
+  test: {
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html', 'json-summary'],
+      include: ['src/lib/**'],          // sólo la lógica: los componentes se verifican e2e (TP7)
+      exclude: ['src/lib/**/*.test.js'],
+      thresholds: { lines: 80, branches: 80 },
+    },
+  },
 })

@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../api'
+import { filtrarActividades, inscribirse } from '../lib/actividades'
 import './Home.css'
 
 const Home = () => {
@@ -51,24 +52,7 @@ const Home = () => {
 
     const handleSearch = e => {
         e.preventDefault()
-        const term = search.trim().toLowerCase()
-        if (!term) {
-            setActivities(allActivities)
-            return
-        }
-        const filtered = allActivities.filter(act => {
-            const title = (act.title || act.titulo || '').toLowerCase()
-            const category = (act.category_name || act.nombre_categoria || '').toLowerCase()
-            const day = (act.day || act.dia_semana || '').toLowerCase()
-            const time = (act.start_time || act.hora_inicio || '').toLowerCase()
-            return (
-                title.includes(term) ||
-                category.includes(term) ||
-                day.includes(term) ||
-                time.includes(term)
-            )
-        })
-        setActivities(filtered)
+        setActivities(filtrarActividades(allActivities, search))
     }
 
     const handleSubscribe = async activityId => {
@@ -78,18 +62,12 @@ const Home = () => {
         }
         setLoadingId(activityId)
         try {
-            const { data } = await api.get(`/activities/${activityId}`)
-            const horId = data.schedule?.[0]?.id
-            if (!horId || horId <= 0) {
-                alert('No hay horarios disponibles')
-                return
-            }
-            await api.post('/inscripciones', { usuario_id: +userId, horario_id: horId })
+            await inscribirse(activityId, userId, api)
             await loadActivities()
             alert('¡Inscripción exitosa!')
         } catch (err) {
             console.error(err)
-            alert(err.response?.data?.error || 'Error al inscribirse')
+            alert(err.response?.data?.error || err.message || 'Error al inscribirse')
         } finally {
             setLoadingId(null)
         }
