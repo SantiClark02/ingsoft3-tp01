@@ -13,7 +13,12 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-# ---------- Etapa 2: runtime ----------
+# ---------- Etapa 2: tests (parte del build: ya tiene Node y las devDependencies) ----------
+# Va EN EL MEDIO: la última etapa del archivo tiene que seguir siendo nginx.
+FROM build AS test
+ENTRYPOINT ["npm", "run", "test:ci"]
+
+# ---------- Etapa 3: runtime ----------
 FROM nginx:1.27-alpine
 
 COPY nginx.conf /etc/nginx/conf.d/default.conf

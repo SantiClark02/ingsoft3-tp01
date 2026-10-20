@@ -18,7 +18,16 @@ COPY . .
 # -ldflags="-s -w" quita símbolos de debug y achica el binario.
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /out/server .
 
-# ---------- Etapa 2: runtime ----------
+# ---------- Etapa 2: tests (parte del build: ya tiene Go, el código y las dependencias) ----------
+# Se construye con --target test y los tests corren al hacer docker run (ENTRYPOINT).
+# La imagen final (etapa 3) no se lleva nada de esto.
+FROM build AS test
+ENV CGO_ENABLED=0
+# Por si el script se editó en Windows: lo pasamos a finales de línea Unix (sin \r)
+RUN sed -i 's/\r$//' scripts/test-coverage.sh
+ENTRYPOINT ["sh", "scripts/test-coverage.sh"]
+
+# ---------- Etapa 3: runtime ----------
 FROM alpine:3.20
 
 # ca-certificates para llamadas HTTPS salientes.
