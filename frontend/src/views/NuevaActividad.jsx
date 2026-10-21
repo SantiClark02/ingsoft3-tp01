@@ -29,7 +29,7 @@ const NuevaActividad = () => {
         const token = localStorage.getItem('token')
         try {
             await api.post('/activities', {
-                titulo,
+                title: titulo,
                 descripcion,
                 cupo_max: parseInt(cupoMax),
                 imagen_url: imagenUrl,
