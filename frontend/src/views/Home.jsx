@@ -158,6 +158,7 @@ const Home = () => {
                                     </p>
 
                                     <button
+                                        aria-label={`${act.subscribed ? 'Desinscribirse de' : 'Inscribirse a'} ${act.title}`}
                                         onClick={() =>
                                             act.subscribed
                                                 ? handleUnsubscribe(act.inscription_id)

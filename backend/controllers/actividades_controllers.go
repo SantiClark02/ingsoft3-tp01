@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"backend/reglas"
 	"backend/services"
 	"net/http"
 	"strconv"
@@ -54,6 +55,12 @@ func CreateActividad(ctx *gin.Context) {
 		return
 	}
 
+	// TP7: las reglas de la actividad se validan antes de tocar la base (400, no 500)
+	if err := reglas.ValidarActividad(nuevaActividad.Titulo, nuevaActividad.CupoMax); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
 	if err := services.CreateActivity(nuevaActividad); err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -74,6 +81,11 @@ func EditarActividad(ctx *gin.Context) {
 	var editData services.NuevaActividadRequest
 	if err := ctx.ShouldBindJSON(&editData); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Datos inválidos"})
+		return
+	}
+
+	if err := reglas.ValidarActividad(editData.Titulo, editData.CupoMax); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 

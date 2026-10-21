@@ -154,8 +154,10 @@ jobs:
       - name: Desplegar QA (baja la imagen verificada y la ejecuta)
         shell: cmd
         run: |
+          echo Imagenes a desplegar en QA: ghcr.io/santiclark02/ingsoft3-tp01-backend:sha-%GITHUB_SHA% y ghcr.io/santiclark02/ingsoft3-tp01-frontend:sha-%GITHUB_SHA%
           docker compose -f compose.qa.yml pull || exit /b 1
-          docker compose -f compose.qa.yml up -d
+          docker compose -f compose.qa.yml up -d || exit /b 1
+          docker compose -f compose.qa.yml images
 
       - name: Smoke test QA (con reintentos)
         shell: powershell
@@ -182,9 +184,93 @@ jobs:
           }
           if (-not $ok) { Write-Host "QA no respondio a tiempo"; exit 1 }
 
+  # ================= TP7: las pruebas como gate de promoción =================
+  # deploy-qa -> integracion (API de QA + su MySQL, sin navegador) -> e2e (navegador real
+  # contra el front de QA) -> aprobación -> deploy-prod. Si alguna suite falla, PROD ni se pide.
+
+  integracion:
+    runs-on: self-hosted                     # QA vive en esta máquina (plan C): las pruebas corren acá
+    needs: deploy-qa                         # QA ya ejecuta la imagen de ESTA corrida
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Instalar dependencias (sin navegador)
+        working-directory: ./frontend
+        shell: cmd
+        run: npm ci
+
+      - name: Integracion contra la API de QA
+        working-directory: ./frontend
+        shell: cmd
+        env:
+          API_BASE_URL: http://localhost:8081   # la API de QA (no el front)
+        run: npx playwright test e2e/api.spec.js
+
+      - name: Resumen de integracion
+        if: ${{ !cancelled() }}
+        working-directory: ./frontend
+        shell: cmd
+        run: node -e "const s=require('./playwright-resultados.json').stats; console.log('### Integracion contra la API de QA\n| passed | failed | flaky | skipped |\n|---|---|---|---|\n| '+s.expected+' | '+s.unexpected+' | '+s.flaky+' | '+s.skipped+' |')" >> "%GITHUB_STEP_SUMMARY%"
+
+      - name: Publicar reporte
+        if: ${{ !cancelled() }}            # el reporte importa MÁS cuando falla
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-integracion               # nombre distinto por suite
+          path: frontend/playwright-report
+          retention-days: 7
+
+  e2e:
+    runs-on: self-hosted                     # QA vive en esta máquina (plan C): las pruebas corren acá
+    needs: integracion                       # si la API está rota, no gastamos un navegador
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Instalar dependencias + navegador
+        working-directory: ./frontend
+        shell: cmd
+        run: |
+          npm ci || exit /b 1
+          npx playwright install chromium
+
+      - name: E2E contra el front de QA
+        working-directory: ./frontend
+        shell: cmd
+        env:
+          E2E_BASE_URL: http://localhost:3001   # el front de QA
+        run: npx playwright test e2e/actividades.spec.js
+
+      - name: Resumen de e2e
+        if: ${{ !cancelled() }}
+        working-directory: ./frontend
+        shell: cmd
+        run: node -e "const s=require('./playwright-resultados.json').stats; console.log('### E2E contra el front de QA\n| passed | failed | flaky | skipped |\n|---|---|---|---|\n| '+s.expected+' | '+s.unexpected+' | '+s.flaky+' | '+s.skipped+' |')" >> "%GITHUB_STEP_SUMMARY%"
+
+      - name: Publicar reporte
+        if: ${{ !cancelled() }}            # el reporte importa MÁS cuando falla
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-e2e               # nombre distinto por suite
+          path: frontend/playwright-report
+          retention-days: 7
+
   deploy-prod:
     runs-on: self-hosted
-    needs: deploy-qa                         # PROD sólo después de QA vivo (hereda el if de main)
+    needs: e2e                               # EL gate: sin integración + e2e en verde, ni se pide aprobación
     environment: production                  # aca el workflow SE PAUSA hasta que el reviewer apruebe
     concurrency: { group: deploy-prod, cancel-in-progress: false }
     env:
@@ -196,8 +282,10 @@ jobs:
       - name: Desplegar PROD (baja la imagen verificada y la ejecuta)
         shell: cmd
         run: |
+          echo Imagenes a desplegar en PROD: ghcr.io/santiclark02/ingsoft3-tp01-backend:sha-%GITHUB_SHA% y ghcr.io/santiclark02/ingsoft3-tp01-frontend:sha-%GITHUB_SHA%
           docker compose -f compose.prod.yml pull || exit /b 1
-          docker compose -f compose.prod.yml up -d
+          docker compose -f compose.prod.yml up -d || exit /b 1
+          docker compose -f compose.prod.yml images
 
       - name: Smoke test PROD (con reintentos)
         shell: powershell

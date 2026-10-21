@@ -26,3 +26,8 @@ vendor/
 .env.development.local
 .env.production.local
 coverage/
+
+# Playwright (TP7): se generan en cada corrida, no se versionan
+playwright-report/
+test-results/
+playwright-resultados.json
