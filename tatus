@@ -1,0 +1,31 @@
+warning: in the working copy of 'backend/go.mod', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/backend/go.mod b/backend/go.mod[m
+[1mindex b4a056c..278f1bc 100644[m
+[1m--- a/backend/go.mod[m
+[1m+++ b/backend/go.mod[m
+[36m@@ -3,8 +3,11 @@[m [mmodule backend[m
+ go 1.21.6[m
+ [m
+ require ([m
+[32m+[m	[32mgithub.com/getsentry/sentry-go v0.33.0[m
+[32m+[m	[32mgithub.com/getsentry/sentry-go/gin v0.33.0[m
+ 	github.com/gin-gonic/gin v1.10.0[m
+ 	github.com/golang-jwt/jwt/v5 v5.2.2[m
+[32m+[m	[32mgolang.org/x/crypto v0.31.0[m
+ 	gorm.io/driver/mysql v1.5.7[m
+ 	gorm.io/gorm v1.26.1[m
+ )[m
+[36m@@ -33,10 +36,9 @@[m [mrequire ([m
+ 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect[m
+ 	github.com/ugorji/go/codec v1.2.12 // indirect[m
+ 	golang.org/x/arch v0.8.0 // indirect[m
+[31m-	golang.org/x/crypto v0.23.0 // indirect[m
+[31m-	golang.org/x/net v0.25.0 // indirect[m
+[31m-	golang.org/x/sys v0.20.0 // indirect[m
+[31m-	golang.org/x/text v0.20.0 // indirect[m
+[32m+[m	[32mgolang.org/x/net v0.33.0 // indirect[m
+[32m+[m	[32mgolang.org/x/sys v0.28.0 // indirect[m
+[32m+[m	[32mgolang.org/x/text v0.21.0 // indirect[m
+ 	google.golang.org/protobuf v1.34.1 // indirect[m
+ 	gopkg.in/yaml.v3 v3.0.1 // indirect[m
+ )[m

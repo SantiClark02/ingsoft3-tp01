@@ -9,6 +9,9 @@ import NuevaActividad from './views/NuevaActividad.jsx';
 import EditarEliminarActividad from './views/EditarEliminarActividad.jsx';
 import EditarActividad from './views/EditarActividad.jsx';
 import './index.css';
+import { iniciarSentry } from './observabilidad.js';
+
+iniciarSentry(); // TP9: antes de renderizar, para medir desde la primera carga
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
