@@ -85,7 +85,9 @@ func ListarActividadesParaUsuario(userID uint, query string) ([]domain.ActivityL
 		return nil, fmt.Errorf("error listando actividades: %w", err)
 	}
 
-	var out []domain.ActivityListItem
+	// Lista vacía y no nil: sin actividades, la API devuelve [] y no null
+	// (con null el front se rompía al hacer .length — lo encontró preprod, que nace vacío).
+	out := []domain.ActivityListItem{}
 	for _, a := range daoActs {
 		var h dao.Horario
 		clients.DB.
