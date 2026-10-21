@@ -111,7 +111,7 @@ const Home = () => {
                     )}
                 </div>
 
-                <h1>Actividades Disponibles</h1>
+                <h1>Actividades Disponibles · Gimnasio UCC</h1>
 
                 <form className="search-form" onSubmit={handleSearch}>
                     <input
