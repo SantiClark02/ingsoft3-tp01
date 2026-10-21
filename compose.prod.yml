@@ -1,0 +1,57 @@
+# Entorno PROD del TP6. NO se levanta a mano: lo levanta el job deploy-prod del pipeline
+# (.github/workflows/ci.yml) en el runner self-hosted, con el commit que verificó.
+# Proyecto de Compose propio (name:), puertos propios y base de datos propia (volumen propio):
+# QA y PROD conviven en la misma máquina sin pisarse.
+name: gimnasio-prod
+
+services:
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:?falta DB_PASSWORD}
+      MYSQL_DATABASE: backend
+      MYSQL_USER: gimnasio_user
+      MYSQL_PASSWORD: ${DB_PASSWORD:?falta DB_PASSWORD}
+    volumes:
+      - mysql_data_prod:/var/lib/mysql
+      - ./db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 40s
+
+  backend:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    ports:
+      - "8082:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: gimnasio_user
+      DB_PASSWORD: ${DB_PASSWORD:?falta DB_PASSWORD}
+      DB_NAME: backend
+      JWT_SECRET: ${JWT_SECRET:?falta JWT_SECRET}
+      APP_COMMIT: ${GITHUB_SHA:-local}   # el commit desplegado: lo devuelve /health
+
+  frontend:
+    build:
+      context: ./frontend
+    restart: unless-stopped
+    ports:
+      - "3002:80"
+    depends_on:
+      - backend
+    environment:
+      BACKEND_URL: http://backend:8080   # el backend de ESTE entorno (su propia red de Compose)
+      DNS_RESOLVER: 127.0.0.11           # el DNS interno de Docker
+
+volumes:
+  mysql_data_prod:
