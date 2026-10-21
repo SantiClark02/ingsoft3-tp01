@@ -151,9 +151,11 @@ jobs:
       # se despliega lo mismo que se verificó.
       - uses: actions/checkout@v4
 
-      - name: Desplegar QA (docker compose en el runner)
+      - name: Desplegar QA (baja la imagen verificada y la ejecuta)
         shell: cmd
-        run: docker compose -f compose.qa.yml up -d --build
+        run: |
+          docker compose -f compose.qa.yml pull || exit /b 1
+          docker compose -f compose.qa.yml up -d
 
       - name: Smoke test QA (con reintentos)
         shell: powershell
@@ -191,9 +193,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4            # el commit aprobado, no lo último de main
 
-      - name: Desplegar PROD (docker compose en el runner)
+      - name: Desplegar PROD (baja la imagen verificada y la ejecuta)
         shell: cmd
-        run: docker compose -f compose.prod.yml up -d --build
+        run: |
+          docker compose -f compose.prod.yml pull || exit /b 1
+          docker compose -f compose.prod.yml up -d
 
       - name: Smoke test PROD (con reintentos)
         shell: powershell
