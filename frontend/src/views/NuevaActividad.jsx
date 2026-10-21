@@ -60,70 +60,79 @@ const NuevaActividad = () => {
     return (
         <div className="nueva-actividad-container">
             <h1>Crear Nueva Actividad</h1>
-            {error && <p className="error">{error}</p>}
+            {error && <p className="error" role="alert">{error}</p>}
             <form className="nueva-actividad-form" onSubmit={handleSubmit}>
-                <label>Título</label>
+                <label htmlFor="titulo">Título</label>
                 <input
+                    id="titulo"
                     type="text"
                     value={titulo}
                     onChange={e => setTitulo(e.target.value)}
                     required
                 />
 
-                <label>Descripción</label>
+                <label htmlFor="descripcion">Descripción</label>
                 <textarea
+                    id="descripcion"
                     value={descripcion}
                     onChange={e => setDescripcion(e.target.value)}
                     required
                 ></textarea>
 
-                <label>Cupo máximo</label>
+                <label htmlFor="cupo">Cupo máximo</label>
                 <input
+                    id="cupo"
                     type="number"
                     value={cupoMax}
                     onChange={e => setCupoMax(e.target.value)}
                     required
                 />
 
-                <label>Imagen (URL)</label>
+                <label htmlFor="imagen">Imagen (URL)</label>
                 <input
+                    id="imagen"
                     type="url"
                     value={imagenUrl}
                     onChange={e => setImagenUrl(e.target.value)}
                 />
 
-                <label>Categoría</label>
+                <label htmlFor="categoria">Categoría</label>
                 <input
+                    id="categoria"
                     type="text"
                     value={nombreCategoria}
                     onChange={e => setNombreCategoria(e.target.value)}
                     required
                 />
 
-                <label>Nombre del instructor</label>
+                <label htmlFor="instructor">Nombre del instructor</label>
                 <input
+                    id="instructor"
                     type="text"
                     value={nombreInstructor}
                     onChange={e => setNombreInstructor(e.target.value)}
                     required
                 />
 
-                <label>Email del instructor</label>
+                <label htmlFor="email">Email del instructor</label>
                 <input
+                    id="email"
                     type="email"
                     value={emailInstructor}
                     onChange={e => setEmailInstructor(e.target.value)}
                 />
 
-                <label>Especialidad del instructor</label>
+                <label htmlFor="especialidad">Especialidad del instructor</label>
                 <input
+                    id="especialidad"
                     type="text"
                     value={especialidadInstructor}
                     onChange={e => setEspecialidadInstructor(e.target.value)}
                 />
 
-                <label>Día de la semana</label>
+                <label htmlFor="dia">Día de la semana</label>
                 <select
+                    id="dia"
                     value={diaSemana}
                     onChange={e => setDiaSemana(e.target.value)}
                 >
@@ -136,16 +145,18 @@ const NuevaActividad = () => {
                     <option value="Dom">Domingo</option>
                 </select>
 
-                <label>Hora de inicio</label>
+                <label htmlFor="hora">Hora de inicio</label>
                 <input
+                    id="hora"
                     type="time"
                     value={horaInicio}
                     onChange={e => setHoraInicio(e.target.value)}
                     required
                 />
 
-                <label>Duración (minutos)</label>
+                <label htmlFor="duracion">Duración (minutos)</label>
                 <input
+                    id="duracion"
                     type="number"
                     value={duracionMin}
                     onChange={e => setDuracionMin(e.target.value)}

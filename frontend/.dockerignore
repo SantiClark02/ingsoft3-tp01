@@ -7,4 +7,6 @@ dist
 *.md
 Dockerfile
 .dockerignore
-coverage
+coverageplaywright-report
+test-results
+e2e

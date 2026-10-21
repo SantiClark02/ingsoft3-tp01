@@ -104,6 +104,7 @@ const EditarEliminarActividad = () => {
                                     </button>
                                     <button
                                         className="delete-button"
+                                        aria-label={`Eliminar ${act.title}`}
                                         onClick={() => handleDelete(act.id)}
                                     >
                                         Eliminar

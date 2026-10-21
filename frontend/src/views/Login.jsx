@@ -41,12 +41,14 @@ const Login = () => {
                 <h2>Iniciar Sesión · Gimnasio UCC</h2>
                 <input
                     type="text"
+                    aria-label="Usuario"
                     placeholder="Usuario"
                     value={username}
                     onChange={e => setUsername(e.target.value)}
                 />
                 <input
                     type="password"
+                    aria-label="Contraseña"
                     placeholder="Contraseña"
                     value={password}
                     onChange={e => setPassword(e.target.value)}

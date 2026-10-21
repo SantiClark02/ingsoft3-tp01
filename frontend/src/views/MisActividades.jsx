@@ -119,6 +119,7 @@ const MisActividades = () => {
                                         </p>
 
                                         <button
+                                            aria-label={`Desinscribirse de ${act.title}`}
                                             onClick={() => handleUnsubscribe(act.inscription_id)}
                                             disabled={isLoading}
                                         >
