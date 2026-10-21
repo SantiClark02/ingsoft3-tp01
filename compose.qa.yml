@@ -24,8 +24,9 @@ services:
       start_period: 40s
 
   backend:
-    build:
-      context: ./backend
+    # La MISMA imagen que el pipeline verificó y publicó (build once, deploy many):
+    # el entorno no construye nada, ejecuta la imagen del commit de esta corrida.
+    image: ghcr.io/santiclark02/ingsoft3-tp01-backend:sha-${GITHUB_SHA:?falta GITHUB_SHA}
     restart: unless-stopped
     ports:
       - "8081:8080"
@@ -39,11 +40,12 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:?falta DB_PASSWORD}
       DB_NAME: backend
       JWT_SECRET: ${JWT_SECRET:?falta JWT_SECRET}
-      APP_COMMIT: ${GITHUB_SHA:-local}   # el commit desplegado: lo devuelve /health
+      APP_COMMIT: ${GITHUB_SHA}   # el commit desplegado: lo devuelve /health
 
   frontend:
-    build:
-      context: ./frontend
+    # La MISMA imagen que el pipeline verificó y publicó (build once, deploy many):
+    # el entorno no construye nada, ejecuta la imagen del commit de esta corrida.
+    image: ghcr.io/santiclark02/ingsoft3-tp01-frontend:sha-${GITHUB_SHA:?falta GITHUB_SHA}
     restart: unless-stopped
     ports:
       - "3001:80"
