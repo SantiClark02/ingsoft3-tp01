@@ -240,12 +240,17 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      - name: Instalar dependencias + navegador
+      # Dos pasos separados a propósito: en cmd, npm/npx son archivos .cmd, y llamar uno
+      # desde un script sin CALL termina el script ahí: la segunda línea nunca corría.
+      - name: Instalar dependencias
         working-directory: ./frontend
         shell: cmd
-        run: |
-          npm ci || exit /b 1
-          npx playwright install chromium
+        run: npm ci
+
+      - name: Instalar el navegador (Chromium)
+        working-directory: ./frontend
+        shell: cmd
+        run: npx playwright install chromium
 
       - name: E2E contra el front de QA
         working-directory: ./frontend
