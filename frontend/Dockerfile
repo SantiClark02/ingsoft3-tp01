@@ -21,8 +21,14 @@ ENTRYPOINT ["npm", "run", "test:ci"]
 # ---------- Etapa 3: runtime ----------
 FROM nginx:1.27-alpine
 
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# TP6: se copia una PLANTILLA (templates/), no una config fija (conf.d/).
+# Al arrancar, nginx reemplaza ${BACKEND_URL} y ${DNS_RESOLVER} por las variables
+# del entorno. Los valores de abajo son los de docker compose (por defecto);
+# cada entorno los pisa con los suyos.
+COPY default.conf.template /etc/nginx/templates/default.conf.template
 COPY --from=build /app/dist /usr/share/nginx/html
+ENV BACKEND_URL=http://backend:8080 \
+    DNS_RESOLVER=127.0.0.11
 
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]

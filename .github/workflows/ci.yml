@@ -9,19 +9,13 @@ on:
 jobs:
   build-backend:
     runs-on: ubuntu-latest
+    permissions:          # TP6: sólo este job puede publicar paquetes (mínimo privilegio)
+      contents: read
+      packages: write
     steps:
       - uses: actions/checkout@v4
 
       - uses: docker/setup-buildx-action@v3
-
-      - name: Build backend image
-        uses: docker/build-push-action@v6
-        with:
-          context: ./backend
-          push: false
-          tags: gimnasio-backend:ci
-          cache-from: type=gha,scope=backend
-          cache-to: type=gha,mode=max,scope=backend
 
       # ---- TP5: tests + coverage + umbral, usando la etapa "test" del Dockerfile ----
       - name: Construir la etapa de tests del backend
@@ -51,21 +45,35 @@ jobs:
           name: coverage-backend
           path: backend-coverage
 
+      # ---- TP6: publicar la imagen, y sólo la que pasó ----
+      # Estos dos pasos van ÚLTIMOS a propósito: si los tests de arriba fallan, el job
+      # muere antes y nunca se llega acá. La condición "si pasaron los tests" es el orden.
+      - name: Entrar al registry
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Construir y publicar la imagen del backend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          tags: ghcr.io/santiclark02/ingsoft3-tp01-backend:sha-${{ github.sha }}
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,mode=max,scope=backend
+
   build-frontend:
     runs-on: ubuntu-latest
+    permissions:          # TP6: sólo este job puede publicar paquetes (mínimo privilegio)
+      contents: read
+      packages: write
     steps:
       - uses: actions/checkout@v4
 
       - uses: docker/setup-buildx-action@v3
-
-      - name: Build frontend image
-        uses: docker/build-push-action@v6
-        with:
-          context: ./frontend
-          push: false
-          tags: gimnasio-frontend:ci
-          cache-from: type=gha,scope=frontend
-          cache-to: type=gha,mode=max,scope=frontend
 
       # ---- TP5: tests + coverage + umbral, usando la etapa "test" del Dockerfile ----
       - name: Construir la etapa de tests del frontend
@@ -104,3 +112,110 @@ jobs:
         with:
           name: coverage-frontend
           path: frontend-coverage
+
+      # ---- TP6: publicar la imagen, y sólo la que pasó ----
+      # Estos dos pasos van ÚLTIMOS a propósito: si los tests de arriba fallan, el job
+      # muere antes y nunca se llega acá. La condición "si pasaron los tests" es el orden.
+      - name: Entrar al registry
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Construir y publicar la imagen del frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          tags: ghcr.io/santiclark02/ingsoft3-tp01-frontend:sha-${{ github.sha }}
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,mode=max,scope=frontend
+
+  # ================= TP6: Continuous Delivery =================
+  # Plan C de la cátedra (§3.6): los entornos corren en un runner self-hosted (mi máquina)
+  # como dos proyectos de Docker Compose separados. El deploy lo dispara SIEMPRE el pipeline.
+
+  deploy-qa:
+    runs-on: self-hosted
+    needs: [build-backend, build-frontend]   # sin CI verde no hay deploy
+    if: github.ref == 'refs/heads/main'      # los PRs verifican; sólo main despliega
+    environment: qa                          # sus secrets + historial de deploys
+    concurrency: { group: deploy-qa, cancel-in-progress: false }
+    env:
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}   # secrets del environment qa
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+    steps:
+      # checkout baja EL commit de esta corrida (github.sha), no la punta de main:
+      # se despliega lo mismo que se verificó.
+      - uses: actions/checkout@v4
+
+      - name: Desplegar QA (docker compose en el runner)
+        shell: cmd
+        run: docker compose -f compose.qa.yml up -d --build
+
+      - name: Smoke test QA (con reintentos)
+        shell: powershell
+        env:
+          URL_API: http://localhost:8081
+          URL_FRONT: http://localhost:3001
+        run: |
+          # Verifica 4 cosas: la api vive (/health), la base responde (/activities lee de MySQL),
+          # el front se sirve, y /health dice que corre ESTE commit (no una versión vieja).
+          $ok = $false
+          for ($i = 1; $i -le 30; $i++) {
+            try {
+              $h = Invoke-RestMethod -Uri "$env:URL_API/health" -TimeoutSec 10
+              Invoke-WebRequest -UseBasicParsing -Uri "$env:URL_API/activities" -TimeoutSec 10 | Out-Null
+              Invoke-WebRequest -UseBasicParsing -Uri "$env:URL_FRONT/" -TimeoutSec 10 | Out-Null
+              if ($h.commit -ne $env:GITHUB_SHA) { throw "corre el commit $($h.commit), se esperaba $env:GITHUB_SHA" }
+              Write-Host "OK QA responde (API + BD + front) y corre el commit $($h.commit)"
+              $ok = $true
+              break
+            } catch {
+              Write-Host "Intento $i/30: $($_.Exception.Message)"
+              Start-Sleep -Seconds 10
+            }
+          }
+          if (-not $ok) { Write-Host "QA no respondio a tiempo"; exit 1 }
+
+  deploy-prod:
+    runs-on: self-hosted
+    needs: deploy-qa                         # PROD sólo después de QA vivo (hereda el if de main)
+    environment: production                  # aca el workflow SE PAUSA hasta que el reviewer apruebe
+    concurrency: { group: deploy-prod, cancel-in-progress: false }
+    env:
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}   # secrets del environment production: sin aprobación no los lee nadie
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+    steps:
+      - uses: actions/checkout@v4            # el commit aprobado, no lo último de main
+
+      - name: Desplegar PROD (docker compose en el runner)
+        shell: cmd
+        run: docker compose -f compose.prod.yml up -d --build
+
+      - name: Smoke test PROD (con reintentos)
+        shell: powershell
+        env:
+          URL_API: http://localhost:8082
+          URL_FRONT: http://localhost:3002
+        run: |
+          # Verifica 4 cosas: la api vive (/health), la base responde (/activities lee de MySQL),
+          # el front se sirve, y /health dice que corre ESTE commit (no una versión vieja).
+          $ok = $false
+          for ($i = 1; $i -le 30; $i++) {
+            try {
+              $h = Invoke-RestMethod -Uri "$env:URL_API/health" -TimeoutSec 10
+              Invoke-WebRequest -UseBasicParsing -Uri "$env:URL_API/activities" -TimeoutSec 10 | Out-Null
+              Invoke-WebRequest -UseBasicParsing -Uri "$env:URL_FRONT/" -TimeoutSec 10 | Out-Null
+              if ($h.commit -ne $env:GITHUB_SHA) { throw "corre el commit $($h.commit), se esperaba $env:GITHUB_SHA" }
+              Write-Host "OK PROD responde (API + BD + front) y corre el commit $($h.commit)"
+              $ok = $true
+              break
+            } catch {
+              Write-Host "Intento $i/30: $($_.Exception.Message)"
+              Start-Sleep -Seconds 10
+            }
+          }
+          if (-not $ok) { Write-Host "PROD no respondio a tiempo"; exit 1 }

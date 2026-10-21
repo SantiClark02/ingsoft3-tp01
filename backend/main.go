@@ -4,6 +4,8 @@ import (
 	"backend/controllers"
 	database "backend/db"
 	"backend/utils"
+	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
 )
@@ -18,6 +20,13 @@ func main() {
 
 	// Middleware global: CORS y recuperación de pánico
 	router.Use(utils.CORS, gin.Recovery())
+
+	// Endpoint de vida para el smoke test del pipeline (TP6).
+	// Devuelve también el commit que está corriendo (APP_COMMIT lo carga el deploy),
+	// así el smoke puede comprobar que el entorno corre la versión que se desplegó.
+	router.GET("/health", func(ctx *gin.Context) {
+		ctx.JSON(http.StatusOK, gin.H{"status": "ok", "commit": os.Getenv("APP_COMMIT")})
+	})
 
 	// Rutas de autenticación
 	router.POST("/users/login", controllers.Login)
