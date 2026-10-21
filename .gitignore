@@ -31,3 +31,10 @@ coverage/
 playwright-report/
 test-results/
 playwright-resultados.json
+
+# Terraform (TP8): el estado tiene secretos y vive sólo en mi máquina
+*.tfstate
+*.tfstate.*
+.terraform/
+*.tfvars
+crash.log
