@@ -1,0 +1,21 @@
+# TP9: Dependabot vigila las dependencias de los tres ecosistemas de la app.
+# Cada PR que abre pasa por el MISMO pipeline que cualquier otro (tests + coverage + build).
+version: 2
+updates:
+  - package-ecosystem: "gomod"            # backend (Go): go.mod / go.sum
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: "npm"              # frontend (React + Vite): package.json / package-lock.json
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: "github-actions"   # las actions del pipeline también son dependencias
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5

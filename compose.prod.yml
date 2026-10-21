@@ -41,6 +41,8 @@ services:
       DB_NAME: backend
       JWT_SECRET: ${JWT_SECRET:?falta JWT_SECRET}
       APP_COMMIT: ${GITHUB_SHA}   # el commit desplegado: lo devuelve /health
+      SENTRY_DSN: ${SENTRY_DSN:-}       # TP9: adónde manda errores y tiempos (vacío = Sentry apagado)
+      SENTRY_ENVIRONMENT: produccion
 
   frontend:
     # La MISMA imagen que el pipeline verificó y publicó (build once, deploy many):

@@ -12,6 +12,7 @@
     "test:ci": "vitest run --coverage --coverage.reportsDirectory=${COVERAGE_DIR:-coverage}"
   },
   "dependencies": {
+    "@sentry/react": "^11.8.0",
     "axios": "^1.9.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
