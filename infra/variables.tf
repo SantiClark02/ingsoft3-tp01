@@ -15,7 +15,7 @@ variable "image_repo_front" {
 variable "image_tag" {
   description = "sha-<commit> de un merge que publicó imagen (TP7). Hoy: el de la release v7.0.0"
   type        = string
-  default     = "sha-3deec3533b003d9106eac68392f0ea3710c05beb"
+  default     = "sha-71e53f7134d13cc5ef4092c75ca3e647be3c2852"
 }
 
 variable "api_port" {
