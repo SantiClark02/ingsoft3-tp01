@@ -112,7 +112,6 @@ const Home = () => {
                 </div>
 
                 <h1>Actividades Disponibles · Gimnasio UCC</h1>
-                <p>Horario de atención: lunes a sábado de 7 a 23 hs</p>
 
                 <form className="search-form" onSubmit={handleSearch}>
                     <input
