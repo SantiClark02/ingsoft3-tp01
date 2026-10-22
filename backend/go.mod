@@ -1,9 +1,9 @@
 module backend
 
-go 1.21.6
+go 1.25.0
 
 require (
-	github.com/getsentry/sentry-go v0.33.0
+	github.com/getsentry/sentry-go v0.50.0
 	github.com/getsentry/sentry-go/gin v0.33.0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/golang-jwt/jwt/v5 v5.3.1
@@ -37,8 +37,8 @@ require (
 	github.com/ugorji/go/codec v1.2.12 // indirect
 	golang.org/x/arch v0.8.0 // indirect
 	golang.org/x/net v0.33.0 // indirect
-	golang.org/x/sys v0.28.0 // indirect
-	golang.org/x/text v0.21.0 // indirect
+	golang.org/x/sys v0.47.0 // indirect
+	golang.org/x/text v0.41.0 // indirect
 	google.golang.org/protobuf v1.34.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
