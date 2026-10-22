@@ -22,9 +22,10 @@ func Login(username string, password string) (uint, string, string, error) {
 		return 0, "", "", fmt.Errorf("usuario no encontrado")
 	}
 
+	// TP9 (CodeQL: "Clear-text logging of sensitive information", issue #14 del TP3):
+	// nunca se loguean la contraseña ingresada ni el hash. Los logs los lee cualquiera
+	// con acceso a docker logs / al runner, y no están cifrados.
 	fmt.Println("➡️ Usuario encontrado:", user.Username)
-	fmt.Println("➡️ Hash almacenado:", user.PasswordHash)
-	fmt.Println("➡️ Contraseña ingresada:", password)
 
 	// Comparamos la contraseña ingresada con el hash almacenado
 	err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
