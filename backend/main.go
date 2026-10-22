@@ -48,11 +48,6 @@ func main() {
 	// TP9: el monitor externo gratuito pregunta con HEAD, y Gin no lo contesta solo (daba 404).
 	router.HEAD("/health", health)
 
-	// TP9 (TEMPORAL): un error a propósito para verlo llegar a Sentry. Se saca al cerrar el práctico.
-	router.GET("/falla", func(ctx *gin.Context) {
-		panic("Falla de prueba del TP9")
-	})
-
 	// Rutas de autenticación
 	router.POST("/users/login", controllers.Login)
 
